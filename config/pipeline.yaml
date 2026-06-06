@@ -1,0 +1,61 @@
+# SonicMorph — Pipeline Configuration
+
+dataset:
+  version: v1
+
+audio:
+  format: wav
+  sample_rate: 44100
+  bit_depth: 16
+  channels: 1
+
+validation:
+  min_duration: 30
+  max_duration: 600
+  min_bitrate: 128
+  silence_threshold: -40
+  silence_max_ratio: 0.8
+
+normalization:
+  target_lufs: -14
+  standard: EBU_R128
+
+stem_separation:
+  model: htdemucs_ft
+  device: auto
+  stems:
+    - vocals
+    - drums
+    - bass
+    - other
+
+deduplication:
+  enable_filename: true
+  enable_metadata: true
+  enable_fingerprint: true
+  fingerprint_threshold: 0.85
+
+dataset_targets:
+  style_embedder:
+    clip_duration: 5
+    clip_overlap: 2.5
+    source: full_mix
+    skip_silence: true
+
+  musicgen:
+    clip_duration: 20
+    clip_overlap: 5
+    source: full_mix
+    skip_silence: true
+
+  rvc:
+    source: vocals
+    min_duration: 5
+
+concurrency:
+  download_workers: 12
+  processing_workers: 3
+
+retry:
+  max_retries: 3
+  backoff_factor: 2

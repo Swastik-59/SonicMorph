@@ -1,0 +1,71 @@
+# SonicMorph — Artist Configuration
+# Each artist entry controls collection targets and enabled status.
+
+artists:
+  - name: "The Beatles"
+    enabled: true
+    target_song_count: 100
+
+  - name: "Pink Floyd"
+    enabled: true
+    target_song_count: 100
+
+  - name: "Geese"
+    enabled: true
+    target_song_count: 100
+
+  - name: "Queen"
+    enabled: true
+    target_song_count: 100
+
+  - name: "Radiohead"
+    enabled: true
+    target_song_count: 100
+
+  - name: "Nirvana"
+    enabled: true
+    target_song_count: 100
+
+  - name: "Daft Punk"
+    enabled: true
+    target_song_count: 100  
+
+  - name: "Kanye West"
+    enabled: true
+    target_song_count: 100
+  
+  - name: "Joji"
+    enabled: true
+    target_song_count: 100
+
+  - name: "Billie Eilish"
+    enabled: true
+    target_song_count: 100
+
+  - name: "Arctic Monkeys"
+    enabled: true
+    target_song_count: 100
+
+  - name: "laufey"
+    enabled: true
+    target_song_count: 100
+
+  - name: "The Strokes"
+    enabled: true
+    target_song_count: 100
+
+  - name: "lana del rey"
+    enabled: true
+    target_song_count: 100
+
+  - name: "mitski"
+    enabled: true
+    target_song_count: 100
+
+  - name: "Tame Impala"
+    enabled: true
+    target_song_count: 100
+
+  - name: "deftones"
+    enabled: true
+    target_song_count: 100

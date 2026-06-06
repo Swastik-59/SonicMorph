@@ -1,0 +1,51 @@
+# SonicMorph — Source Configuration
+# Each source has an enabled flag and a priority (lower = higher priority).
+
+sources:
+  youtube:
+    enabled: true
+    priority: 1
+    discovery:
+      strategy: hybrid
+      search_template: "{artist_name} {track_title} official audio"
+      fallback_template: "{artist_name} full song audio"
+      reject_keywords:
+        - live
+        - cover
+        - karaoke
+        - reaction
+        - slowed
+        - reverb
+        - remix
+        - tutorial
+        - lesson
+        - instrumental
+      prefer_keywords:
+        - official
+        - audio
+        - remaster
+    max_results_per_search: 10
+    format: bestaudio/best
+    rate_limit: 2
+
+  fma:
+    enabled: false
+    priority: 2
+    base_url: https://freemusicarchive.org/api
+
+  jamendo:
+    enabled: false
+    priority: 3
+    base_url: https://api.jamendo.com/v3.0
+
+  archive:
+    enabled: false
+    priority: 4
+    base_url: https://archive.org
+    collection: audio
+
+  local:
+    enabled: true
+    priority: 5
+    import_directory: ./local_imports
+    watch: false

@@ -1,0 +1,49 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Dataset outputs (large/generated files)
+dataset/raw/
+dataset/stems/
+dataset/processed/
+dataset/cache/
+dataset/logs/
+dataset/reports/
+dataset/metadata/
+dataset/manifests/
+dataset/sonicmorph.db
+
+# Keep dataset README
+!dataset/README.md
+
+# Environment variables
+.env
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Egg info
+*.egg-info/
+*.egg
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Torch / model caches
+*.pt
+*.pth
+pretrained_models/
