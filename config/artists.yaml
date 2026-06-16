@@ -33,39 +33,15 @@ artists:
   - name: "Kanye West"
     enabled: true
     target_song_count: 100
-  
-  - name: "Joji"
-    enabled: true
-    target_song_count: 100
-
-  - name: "Billie Eilish"
-    enabled: true
-    target_song_count: 100
 
   - name: "Arctic Monkeys"
-    enabled: true
-    target_song_count: 100
-
-  - name: "laufey"
     enabled: true
     target_song_count: 100
 
   - name: "The Strokes"
     enabled: true
     target_song_count: 100
-
-  - name: "lana del rey"
-    enabled: true
-    target_song_count: 100
-
-  - name: "mitski"
-    enabled: true
-    target_song_count: 100
-
+    
   - name: "Tame Impala"
-    enabled: true
-    target_song_count: 100
-
-  - name: "deftones"
     enabled: true
     target_song_count: 100

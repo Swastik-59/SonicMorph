@@ -1,7 +1,7 @@
 import typer
-from sonicmorph.pipeline import Pipeline
-from sonicmorph.database import init_db
-from sonicmorph.logging_setup import setup_logging
+from dataset_generation.pipeline import Pipeline
+from dataset_generation.database import init_db
+from dataset_generation.logging_setup import setup_logging
 
 app = typer.Typer()
 

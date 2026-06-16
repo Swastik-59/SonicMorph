@@ -3,7 +3,7 @@ import sqlite3
 import uuid
 from datetime import datetime
 from typing import Optional
-from sonicmorph.config import DATASET_DIR
+from dataset_generation.config import DATASET_DIR
 
 
 def _db_path():

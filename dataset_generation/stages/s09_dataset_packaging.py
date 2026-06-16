@@ -4,8 +4,8 @@ import json
 import math
 import subprocess
 from pathlib import Path
-from sonicmorph.config import DATASET_DIR
-from sonicmorph.utils import ensure_dir, slugify, generate_id
+from dataset_generation.config import DATASET_DIR
+from dataset_generation.utils import ensure_dir, slugify, generate_id
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +113,7 @@ def run(config, db_conn=None):
             artist_rvc_dir = ensure_dir(rvc_dir / artist_slug)
             # Use webrtcvad to extract voiced segments from vocal stem
             try:
-                from sonicmorph.vad import extract_vocal_clips
+                from dataset_generation.vad import extract_vocal_clips
                 min_dur = config.pipeline.get("rvc", {}).get("min_clip_secs", 3.0) if hasattr(config,'pipeline') else 3.0
                 max_dur = config.pipeline.get("rvc", {}).get("max_clip_secs", 15.0) if hasattr(config,'pipeline') else 15.0
                 merge_gap = config.pipeline.get("rvc", {}).get("merge_gap_secs", 0.5) if hasattr(config,'pipeline') else 0.5

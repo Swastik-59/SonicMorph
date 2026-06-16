@@ -6,7 +6,7 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from sonicmorph.config import DATASET_DIR
+from dataset_generation.config import DATASET_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -279,7 +279,7 @@ def run(config, db_conn=None):
 
         song_id, file_path = item
 
-        from sonicmorph.jobs import (
+        from dataset_generation.jobs import (
             create_job,
             start_job,
             complete_job,

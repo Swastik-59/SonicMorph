@@ -1,29 +1,22 @@
-import sqlite3
-from pathlib import Path
+from artist_style_embedder.style_embedder import (
+    ArtistAudioDataset,
+    StyleEncoder
+)
 
-conn = sqlite3.connect("dataset/sonicmorph.db")
-cur = conn.cursor()
+import torch
 
-cur.execute("""
-SELECT song_id,file_path
-FROM songs
-""")
+dataset = ArtistAudioDataset(
+    "dataset/processed/style_embedder",
+    augment=True
+)
 
-missing = []
+mel1, mel2, _ = dataset[0]
 
-for song_id,path in cur.fetchall():
+print("Input shape:", mel1.shape)
 
-    if path and not Path(path).exists():
-        missing.append(song_id)
+model = StyleEncoder()
 
-for song_id in missing:
+with torch.no_grad():
+    z = model(mel1.unsqueeze(0))
 
-    cur.execute(
-        "DELETE FROM songs WHERE song_id=?",
-        (song_id,)
-    )
-
-print("Deleted missing:", len(missing))
-
-conn.commit()
-conn.close()
+print("Embedding shape:", z.shape)

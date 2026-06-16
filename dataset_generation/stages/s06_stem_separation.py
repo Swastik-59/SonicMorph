@@ -5,8 +5,8 @@ import shutil
 
 from pathlib import Path
 
-from sonicmorph.config import DATASET_DIR
-from sonicmorph.utils import ensure_dir, generate_id
+from dataset_generation.config import DATASET_DIR
+from dataset_generation.utils import ensure_dir, generate_id
 
 logger = logging.getLogger(__name__)
 

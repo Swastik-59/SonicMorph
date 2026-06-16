@@ -4,8 +4,8 @@ from pathlib import Path
 from difflib import SequenceMatcher
 import subprocess
 import json
-from sonicmorph.config import DATASET_DIR
-from sonicmorph.utils import compute_file_hash
+from dataset_generation.config import DATASET_DIR
+from dataset_generation.utils import compute_file_hash
 
 logger = logging.getLogger(__name__)
 

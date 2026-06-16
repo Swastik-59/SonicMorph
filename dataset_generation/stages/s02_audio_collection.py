@@ -7,11 +7,11 @@ from concurrent.futures import (
     as_completed,
 )
 
-from sonicmorph.collectors.youtube_collector import (
+from dataset_generation.collectors.youtube_collector import (
     YouTubeCollector,
 )
 
-from sonicmorph.utils import (
+from dataset_generation.utils import (
     slugify,
     generate_id,
     compute_file_hash,
@@ -19,7 +19,7 @@ from sonicmorph.utils import (
     ensure_dir,
 )
 
-from sonicmorph.config import DATASET_DIR
+from dataset_generation.config import DATASET_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +152,7 @@ def run(config, db_conn=None):
             name,
         )
 
-        from sonicmorph.jobs import (
+        from dataset_generation.jobs import (
             create_job,
             start_job,
             complete_job,

@@ -1,8 +1,8 @@
 import logging
 import sqlite3
 from pathlib import Path
-from sonicmorph.config import DATASET_DIR
-from sonicmorph.utils import get_audio_info
+from dataset_generation.config import DATASET_DIR
+from dataset_generation.utils import get_audio_info
 
 logger = logging.getLogger(__name__)
 
