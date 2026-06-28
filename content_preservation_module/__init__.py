@@ -1,6 +1,6 @@
-from .song_features import SongFeatures
-from .feature_loader import FeatureLoader
-from .content_packager import (
+from content_preservation_module.song_features   import SongFeatures
+from content_preservation_module.feature_loader  import FeatureLoader
+from content_preservation_module.content_packager import (
     ContentPackage,
     ContentPackager,
 )
