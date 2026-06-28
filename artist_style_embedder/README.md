@@ -104,6 +104,32 @@ After a successful run, expect these files in `models/style_embedder/`:
 - `epoch_080.pt` - final epoch checkpoint, if training reaches epoch 80
 - `<artist>.pt` - one normalized embedding per artist
 
+## 8.1 Architecture
+
+The Artist Style Embedder is a neural network that learns a 256-dimensional style vector for any artist directly from audio. It is trained with contrastive learning using an NT-Xent, SimCLR-style objective: clips from the same artist are pulled together in embedding space, while clips from different artists are pushed apart.
+
+After training, a full discography is passed through the network and the resulting embeddings are averaged to form one style vector per artist. That vector is then used to condition MusicGen at inference time.
+
+The network follows a two-branch design:
+
+- A CNN frontend processes the mel-spectrogram input.
+- A Transformer encoder captures long-range temporal structure.
+- A projection head maps the learned representation into the 256-dimensional embedding space.
+
+The model is intentionally compact, with roughly 8M parameters, so it can train on a Colab T4 in about 4 hours.
+
+## 8.2 Contrastive Training Principle
+
+Training works by sampling batches of paired clips from the same artist. For each batch, the model sees pairs in the form `(clip_from_artist_X, another_clip_from_artist_X)`, along with negative examples drawn from other artists.
+
+The NT-Xent loss then drives the learning signal:
+
+- Same-artist pairs are pulled together.
+- Different-artist pairs are pushed apart.
+- The temperature hyperparameter controls how strict the separation is.
+
+After roughly 50 to 100 epochs, the embedding space tends to organize into clearly separated artist clusters.
+
 ## Implementation Summary
 
 The model combines:

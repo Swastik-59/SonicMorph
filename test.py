@@ -1,22 +1,15 @@
-from artist_style_embedder.style_embedder import (
-    ArtistAudioDataset,
-    StyleEncoder
-)
+import sqlite3
 
-import torch
+conn = sqlite3.connect("dataset/sonicmorph.db")
+cur = conn.cursor()
 
-dataset = ArtistAudioDataset(
-    "dataset/processed/style_embedder",
-    augment=True
-)
+cur.execute("""
+SELECT song_id, title, file_path
+FROM songs
+LIMIT 10
+""")
 
-mel1, mel2, _ = dataset[0]
+for row in cur.fetchall():
+    print(row)
 
-print("Input shape:", mel1.shape)
-
-model = StyleEncoder()
-
-with torch.no_grad():
-    z = model(mel1.unsqueeze(0))
-
-print("Embedding shape:", z.shape)
+conn.close()
