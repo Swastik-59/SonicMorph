@@ -14,9 +14,6 @@ dataset/metadata/
 dataset/manifests/
 dataset/sonicmorph.db
 
-# Keep dataset README
-!dataset/README.md
-
 # Environment variables
 .env
 
@@ -44,6 +41,5 @@ Thumbs.db
 .DS_Store
 
 # Torch / model caches
-*.pt
 *.pth
 pretrained_models/
