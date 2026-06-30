@@ -41,7 +41,8 @@ SAMPLE_DIR    = PROJECT_ROOT / "models" / "musicgen" / "samples"
 
 # ── training defaults (tuned for 8 GB VRAM) ──────────────────────────────────
 DEFAULT_BASE_MODEL  = "facebook/musicgen-small"   # 300 M params — fits in 8 GB
-DEFAULT_EPOCHS      = 50
+DEFAULT_EPOCHS      = 15      # 15-20 is plenty for a ~700-clip per-artist set;
+                               # diminishing returns past this for style fine-tuning
 DEFAULT_BATCH_SIZE  = 2       # per-step batch; effective = batch × grad_accum
 DEFAULT_GRAD_ACCUM  = 8       # effective batch size = 16
 DEFAULT_LR          = 5e-5
@@ -157,8 +158,14 @@ def train_one_artist(
     print(f"Loading {base_model}...")
     from audiocraft.models import MusicGen
     model = MusicGen.get_pretrained(base_model)
-    model.lm = model.lm.to(device)
-    model.compression_model = model.compression_model.to(device)
+    # Force float32 master weights. autocast() only casts *ops* during the
+    # forward pass — it assumes the underlying parameters/gradients are
+    # float32. If the pretrained checkpoint loads as float16 (as it can
+    # on some audiocraft versions when device='cuda'), GradScaler will
+    # fail with "Attempting to unscale FP16 gradients." and the loss can
+    # overflow to NaN in fp16 cross-entropy. Forcing fp32 here fixes both.
+    model.lm = model.lm.to(device=device, dtype=torch.float32)
+    model.compression_model = model.compression_model.to(device=device, dtype=torch.float32)
 
     # freeze EnCodec — only fine-tune the language model
     for p in model.compression_model.parameters():
@@ -186,17 +193,34 @@ def train_one_artist(
         dataset,
         batch_size         = batch_size,
         shuffle            = True,
-        num_workers        = 0,           # 0 on Windows (audiocraft loads safely)
+        num_workers        = 2,           # overlap audio load/resample/augment with GPU work
+        persistent_workers = True,
+        prefetch_factor    = 2,
         pin_memory         = use_amp,
         drop_last          = True,
     )
     print(f"  Batches per epoch: {len(loader)}")
 
+    # ── PERF FIX: cache text conditioning ──────────────────
+    # The text prompt is identical for every clip of this artist
+    # (build_prompt(artist) never changes mid-training), but the
+    # original loop called the T5 text encoder fresh on every single
+    # step — 342 redundant forward passes per epoch for the exact
+    # same input. Compute it once here and reuse the cached tensor
+    # for every batch. Wrapped in no_grad() because the text encoder
+    # is frozen; the LM's own cross-attention K/V weights (which DO
+    # need gradients) still receive gradients normally, since they
+    # operate on this cached tensor downstream inside compute_predictions.
+    with torch.no_grad():
+        cached_condition_tensors = get_condition_tensors(
+            model, [dataset.prompt] * batch_size, device
+        )
+    print(f"  Cached text conditioning for prompt (saves a T5 pass every step)\n")
+
     # ── optimiser ─────────────────────────────────────────
     opt    = torch.optim.AdamW(model.lm.parameters(), lr=lr, weight_decay=0.01)
     sched  = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs)
-    scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
-
+    scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
     start_epoch = 1
     best_loss   = float("inf")
     ckpt_path   = None if fresh else find_checkpoint(artist)
@@ -243,24 +267,72 @@ def train_one_artist(
         for step, (audio, descriptions) in enumerate(pbar):
             audio = audio.to(device, non_blocking=True)   # [B, 1, T]
 
+            if torch.isnan(audio).any():
+                print("NaNs detected in input audio")
+                continue
+
+            if torch.isinf(audio).any():
+                print("Inf detected in input audio")
+                continue
+
             try:
                 # tokenise audio with frozen EnCodec
                 with torch.no_grad():
                     codes, _ = model.compression_model.encode(audio)  # [B, K, T_codes]
 
-                # build text conditioning tensors
-                with torch.amp.autocast("cuda", enabled=use_amp):
-                    condition_tensors = get_condition_tensors(
-                        model, list(descriptions), device
-                    )
+                # ── FIX: build conditioning AND run the forward pass
+                # inside the SAME autocast context. Previously the LM
+                # forward call was dedented outside the `with` block,
+                # so it ran in float32 while condition_tensors were
+                # float16 — causing "expected Float but found Half".
+                with torch.cuda.amp.autocast(enabled=use_amp):
+                    # Use the cached conditioning computed once before
+                    # the training loop, instead of re-running T5 here.
+                    condition_tensors = cached_condition_tensors
 
                     # forward pass through LM
                     lm_out = model.lm.compute_predictions(
-                        codes             = codes,
-                        conditions        = [],
-                        condition_tensors = condition_tensors,
+                        codes=codes,
+                        conditions=[],
+                        condition_tensors=condition_tensors,
                     )
-                    loss = lm_out.loss / grad_accum
+
+                    # logits: [B, K, T, Card]
+                    logits = lm_out.logits.float()
+
+                    # ── FIX: MusicGen's delay pattern fills early
+                    # positions in some codebooks with a special
+                    # placeholder token equal to `card` (one index past
+                    # the valid vocabulary, e.g. 2048 for a 2048-size
+                    # codebook). compute_predictions() returns `mask`
+                    # to tell you which (B, K, T) positions are real
+                    # audio codes vs. placeholder. Previously we ran
+                    # cross_entropy over EVERY position, including the
+                    # placeholder ones — which means the target index
+                    # (2048) was out of range for logits that only have
+                    # `card` (2048) classes. That out-of-bounds index is
+                    # undefined behaviour on GPU and silently produced
+                    # NaN on every single step. Selecting only the
+                    # valid (masked) positions before computing the
+                    # loss fixes this at the source.
+                    mask = lm_out.mask  # [B, K, T] bool — True = valid
+
+                    targets = codes  # [B, K, T]
+
+                    logits_valid  = logits[mask]   # [N_valid, Card]
+                    targets_valid = targets[mask]  # [N_valid]
+
+                    loss = torch.nn.functional.cross_entropy(
+                        logits_valid,
+                        targets_valid,
+                    )
+
+                    loss = loss / grad_accum
+
+                if torch.isnan(loss) or torch.isinf(loss):
+                    print(f"\n  Skipping step {step}: loss is {loss.item()}")
+                    opt.zero_grad(set_to_none=True)
+                    continue
 
                 scaler.scale(loss).backward()
 
